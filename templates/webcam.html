@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Webcam Recognition{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-md-12">
+        <h1 class="page-title"><i class="fas fa-camera-retro"></i> Webcam Action Recognition</h1>
+
+        <div class="card shadow-lg">
+            <div class="card-header">
+                <i class="fas fa-broadcast-tower"></i> Live Webcam Feed
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-4">
+                    <label for="model-select-webcam" class="form-label fs-5"><i class="fas fa-brain"></i> Select Model</label>
+                    <select class="form-select form-select-lg" id="model-select-webcam">
+                        {% if models %}
+                            {% for model_name_option in models %}
+                            <option value="{{ model_name_option }}" {% if loop.first %}selected{% endif %}>{{ model_name_option }}</option>
+                            {% endfor %}
+                        {% else %}
+                            <option value="" disabled selected>No models available</option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="webcam-feed-container text-center mb-4">
+                    <div id="webcam-loading-spinner" class="spinner-container" style="display: none; min-height: 360px;"> <!-- Min height to prevent layout jump -->
+                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <img id="video-feed" class="img-fluid" src="" alt="Webcam Feed" style="display: none;">
+                    <div id="webcam-error" class="alert alert-danger mt-2" style="display: none;"></div>
+                </div>
+                
+                <div class="text-center">
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-arrow-left"></i> Back to Upload Page
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modelSelectWebcam = document.getElementById('model-select-webcam');
+    const videoFeedImg = document.getElementById('video-feed');
+    const webcamLoadingSpinner = document.getElementById('webcam-loading-spinner');
+    const webcamErrorDiv = document.getElementById('webcam-error');
+
+    function updateWebcamFeed() {
+        if (!modelSelectWebcam || !videoFeedImg || !webcamLoadingSpinner || !webcamErrorDiv) return;
+
+        const selectedModel = modelSelectWebcam.value;
+        if (!selectedModel) {
+            videoFeedImg.style.display = 'none';
+            webcamLoadingSpinner.style.display = 'none';
+            webcamErrorDiv.textContent = 'Please select a model.';
+            webcamErrorDiv.style.display = 'block';
+            return;
+        }
+
+        videoFeedImg.style.display = 'none'; // Hide current image
+        webcamErrorDiv.style.display = 'none'; // Hide previous errors
+        webcamLoadingSpinner.style.display = 'flex'; // Show spinner
+
+        const feedUrl = `/video_feed/${encodeURIComponent(selectedModel)}`;
+        
+        // Preload the image to check if it loads correctly
+        const tempImg = new Image();
+        tempImg.onload = function() {
+            videoFeedImg.src = feedUrl;
+            videoFeedImg.style.display = 'block';
+            webcamLoadingSpinner.style.display = 'none';
+        };
+        tempImg.onerror = function() {
+            webcamLoadingSpinner.style.display = 'none';
+            videoFeedImg.style.display = 'none';
+            webcamErrorDiv.textContent = `Error loading webcam feed for model: ${selectedModel}. The model might not be available or an error occurred.`;
+            webcamErrorDiv.style.display = 'block';
+        };
+        tempImg.src = feedUrl; // Start loading
+    }
+
+    if (modelSelectWebcam) {
+        modelSelectWebcam.addEventListener('change', updateWebcamFeed);
+        // Initial load
+        if (modelSelectWebcam.options.length > 0 && modelSelectWebcam.value) {
+             updateWebcamFeed();
+        } else if (!modelSelectWebcam.value) {
+            videoFeedImg.style.display = 'none';
+            webcamLoadingSpinner.style.display = 'none';
+            webcamErrorDiv.textContent = 'No models available for webcam feed.';
+            webcamErrorDiv.style.display = 'block';
+        }
+    } else {
+        // Fallback if model select is not found
+        if(videoFeedImg) videoFeedImg.style.display = 'none';
+        if(webcamLoadingSpinner) webcamLoadingSpinner.style.display = 'none';
+        if(webcamErrorDiv) {
+            webcamErrorDiv.textContent = 'Webcam controls not found.';
+            webcamErrorDiv.style.display = 'block';
+        }
+    }
+});
+</script>
+{% endblock %}

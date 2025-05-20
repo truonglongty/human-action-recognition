@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Video - Action Recognition{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <h1 class="page-title"><i class="fas fa-cogs"></i> Action Recognition</h1>
+
+        <div class="card shadow-lg">
+            <div class="card-header">
+                <i class="fas fa-video"></i> Upload Video for Processing
+            </div>
+            <div class="card-body p-4">
+                <form id="upload-form" method="post" enctype="multipart/form-data" action="{{ url_for('upload') }}">
+                    <div class="mb-4">
+                        <label for="video" class="form-label fs-5"><i class="fas fa-file-video"></i> Select Video File</label>
+                        <input type="file" class="form-control form-control-lg" id="video" name="video" accept=".mp4,.avi,.mov" required>
+                        <div class="form-text">Supported formats: MP4, AVI, MOV.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="model" class="form-label fs-5"><i class="fas fa-brain"></i> Select Model</label>
+                        <select class="form-select form-select-lg" id="model" name="model" required>
+                            {% if models %}
+                                {% for model_name in models %}
+                                <option value="{{ model_name }}">{{ model_name }}</option>
+                                {% endfor %}
+                            {% else %}
+                                <option value="" disabled selected>No models available</option>
+                            {% endif %}
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100" id="upload-button">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload and Process
+                    </button>
+                </form>
+
+                <div class="progress-container mt-4" id="progress-container" style="display: none;">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="progress-bar-inner">0%</div>
+                    </div>
+                    <div id="status-message" class="text-center mt-2 small"></div>
+                </div>
+                
+                {% if error %}
+                <div class="alert alert-danger mt-4 text-center" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i> {{ error }}
+                </div>
+                {% endif %}
+
+                <div class="or-divider">OR</div>
+
+                <div class="text-center">
+                    <a href="{{ url_for('webcam') }}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-camera-retro"></i> Use Webcam Instead
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+// This script block can be moved to scripts.js if preferred,
+// but keeping it here for page-specific logic is also fine.
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadForm = document.getElementById('upload-form');
+    const uploadButton = document.getElementById('upload-button');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBarInner = document.getElementById('progress-bar-inner');
+    const statusMessage = document.getElementById('status-message');
+    const videoInput = document.getElementById('video');
+
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', function(event) {
+            if (!videoInput.files || videoInput.files.length === 0) {
+                // Bootstrap's built-in validation should handle this if 'required' is set,
+                // but an extra check can be useful.
+                // alert('Please select a video file.');
+                // event.preventDefault(); // Stop form submission
+                return; // Rely on HTML5 'required' attribute
+            }
+
+            // Disable button and show progress
+            uploadButton.disabled = true;
+            uploadButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+            
+            progressContainer.style.display = 'block';
+            progressBarInner.style.width = '0%';
+            progressBarInner.textContent = '0%';
+            statusMessage.textContent = 'Uploading video...';
+
+            // Simulate progress for upload (actual progress requires XHR/Fetch API)
+            let currentProgress = 0;
+            const progressInterval = setInterval(function() {
+                currentProgress += 10;
+                if (currentProgress <= 100) {
+                    progressBarInner.style.width = currentProgress + '%';
+                    progressBarInner.textContent = currentProgress + '%';
+                    if (currentProgress === 100) {
+                        statusMessage.textContent = 'Processing video on server... Please wait.';
+                    }
+                } else {
+                    // If form submission is quick, this might not be reached before page navigates.
+                    // For true progress, you'd use Fetch API and listen to 'progress' events.
+                    // This simulation is mostly for visual feedback.
+                }
+            }, 200); // Adjust interval for simulation speed
+
+            // Note: The interval won't be cleared here if the form submits and navigates away.
+            // For a Single Page Application (SPA) feel, you'd handle form submission with Fetch/XHR
+            // and update the UI without a full page reload.
+        });
+    }
+});
+</script>
+{% endblock %}

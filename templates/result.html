@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Processing Result - {{ model_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-md-12">
+        <h1 class="page-title"><i class="fas fa-check-circle"></i> Processing Result</h1>
+
+        <div class="card shadow-lg">
+            <div class="card-header">
+                <i class="fas fa-film"></i> Processed Video (Model: {{ model_name }})
+            </div>
+            <div class="card-body p-4 text-center">
+                {% if video_path %}
+                <div class="video-container mb-4">
+                    <video class="img-fluid" controls autoplay loop>
+                        <source src="{{ url_for('download_file', filename=video_path) }}" type="video/mp4">
+                        Your browser does not support the video tag. Please try a different browser.
+                    </video>
+                </div>
+                <div class="action-buttons">
+                    <a href="{{ url_for('download_file', filename=video_path) }}" class="btn btn-success btn-lg" download>
+                        <i class="fas fa-download"></i> Download Video
+                    </a>
+                    <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-arrow-left"></i> Process Another
+                    </a>
+                </div>
+                {% else %}
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i> No video to display. There might have been an error during processing.
+                </div>
+                <div class="mt-3">
+                     <a href="{{ url_for('index') }}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-arrow-left"></i> Back to Upload
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
