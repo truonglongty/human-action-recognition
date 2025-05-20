@@ -1,154 +1,105 @@
-Đây là kế hoạch tổng thể để thiết kế và triển khai ứng dụng Flask với đầy đủ các yêu cầu mà bạn đã liệt kê. Chúng ta sẽ chia thành các thành phần chính:
+# Human Action Recognition (HAR) - Nhận dạng Hành động Người từ Camera Giám sát
 
-Yêu cầu cụ thể:
-Chức năng đầu vào:
-Cho phép người dùng tải lên video (hỗ trợ các định dạng phổ biến như MP4, AVI) thông qua giao diện web.
-Hỗ trợ mở webcam trực tiếp để ghi lại và xử lý video thời gian thực.
-Có nút hoặc tùy chọn để chuyển đổi giữa hai chế độ (tải video hoặc webcam).
-Chức năng đầu ra:
-Hiển thị video đầu ra trên giao diện web với các khung bao quanh (bounding box) các đối tượng được xác định là con người trong video
-Gắn nhãn hành động dự đoán (ví dụ: "WalkingWithDog", "Punch", "JumpRope", "PushUps", "Typing") trên khung bao quanh hoặc ở góc video.
-Hiển thị xác suất dự đoán của hành động (nếu có) để tăng tính minh bạch.
-Lựa chọn mô hình dự đoán:
-Cho phép người dùng chọn một trong các mô hình đã được huấn luyện trước đó:
-SVM: Sử dụng mô hình SVM với đặc trưng trích xuất từ ResNet50.
-Random Forest: Sử dụng mô hình Random Forest với đặc trưng từ ResNet50.
-CNN-LSTM: Mô hình học sâu kết hợp CNN và LSTM.
-Giao diện cần có menu thả xuống (dropdown) hoặc nút radio để chọn mô hình.
-Các mô hình được tải từ file đã lưu (ví dụ: .pkl cho SVM/Random Forest, .h5 cho CNN-LSTM) và được tích hợp sẵn trong ứng dụng.
-Giao diện người dùng (UI):
-Thiết kế giao diện đẹp, hiện đại, dễ sử dụng sử dụng HTML, CSS (có thể dùng framework như Bootstrap), và JavaScript.
-Giao diện bao gồm:
-Khu vực để tải video hoặc bật webcam.
-Nút chọn mô hình dự đoán.
-Khu vực hiển thị video đầu ra với khung bao quanh và nhãn hành động.
-Thông báo trạng thái (ví dụ: "Đang xử lý video...", "Dự đoán hoàn tất").
-Đảm bảo giao diện responsive, hoạt động tốt trên cả máy tính và thiết bị di động.
-Sử dụng màu sắc hài hòa, font chữ dễ đọc, và bố cục rõ ràng.
-Xử lý và dự đoán:
-Sử dụng OpenCV để xử lý video (đọc khung hình, phát hiện đối tượng, vẽ khung bao quanh).
-Đối với video tải lên:
-Xử lý từng khung hình, trích xuất đặc trưng (nếu dùng SVM/Random Forest) hoặc đưa trực tiếp vào mô hình CNN-LSTM.
-Lưu video đầu ra với khung bao quanh và nhãn hành động vào thư mục tạm thời và cung cấp link tải về.
-Đối với webcam:
-Xử lý video thời gian thực, hiển thị kết quả trực tiếp trên giao diện web (sử dụng WebRTC hoặc stream video qua Flask).
-Tối ưu hóa hiệu suất để đảm bảo xử lý mượt mà, đặc biệt với webcam.
+## Mô tả dự án
 
+Hệ thống nhận dạng hành động người từ video camera giám sát sử dụng nhiều phương pháp học máy:
+- Trích xuất đặc trưng thủ công + mô hình truyền thống (SVM tự viết, SVM scikit-learn, Random Forest)
+- Học sâu end-to-end (CNN + LSTM với Keras/TensorFlow)
+- Ứng dụng minh họa giao diện web (Flask)
 
----
+## Các hành động nhận dạng
+- WalkingWithDog, Punch, "umpRope, PushUps, Typing
 
-### 🔧 1. Cấu trúc thư mục dự án
+## Cấu trúc thư mục
 
 ```
-action_app/
-│
-├── app.py                         # Flask app chính
-├── static/
-│   ├── css/                       # CSS custom
-│   └── js/                        # JavaScript cho xử lý UI/webcam
-├── templates/
-│   └── index.html                 # Giao diện chính
-├── uploads/                      # Lưu video người dùng tải lên
-├── outputs/                      # Lưu video kết quả
+├── app.py
+├── requirements.txt
+├── README.md
 ├── models/
-│   ├── svm_model.pkl
+│   ├── cnn_lstm_model.h5
 │   ├── rf_model.pkl
-│   └── cnn_lstm_model.h5
+│   ├── svc_model.pkl
+│   └── svm_model.pkl
+├── uploads/
+├── outputs/
 ├── utils/
-│   ├── feature_extractor.py      # Trích xuất đặc trưng ResNet50
-│   ├── predictor.py              # Dự đoán hành động
-│   └── detector.py               # Phát hiện người
-```
-
-
-```
-action_app/
-│
-├── app.py                         # Flask app chính
+│   ├── object_detection.py
+│   └── predict_utils.py
 ├── static/
-│   ├── css/                       # CSS custom
-│   └── js/                        # JavaScript cho xử lý UI/webcam
+│   ├── css/
+│   └── js/
 ├── templates/
-│   └── index.html                 # Giao diện chính
-├── uploads/                      # Lưu video người dùng tải lên
-├── outputs/                      # Lưu video kết quả
-├── models/
-│   ├── svm_model.pkl
-│   ├── rf_model.pkl
-│   └── cnn_lstm_model.h5
-├── utils/
-│   ├── object_detection.py      
-│   ├── predict_utils.py              
+│   ├── base.html
+│   ├── index.html
+│   ├── result.html
+│   └── webcam.html
 ```
 
----
+## Hướng dẫn cài đặt
 
-### 🧠 2. Mô hình dự đoán
+1. **Clone repo:**
+   ```sh
+   git clone https://github.com/truonglongty/human-action-recognition.git
+   cd human-action-recognition
+   ```
 
-* **SVM/Random Forest**:
+2. **Cài đặt thư viện:**
+   ```sh
+   pip install -r requirements.txt
+   ```
 
-  * Dùng `ResNet50` trích đặc trưng từ từng frame: `(2048,)`
-* **CNN-LSTM**:
+3. **Chuẩn bị mô hình:**
+   - Đảm bảo các file mô hình `.h5`, `.pkl` đã có trong thư mục `models/`
+   - Nếu chưa có, hãy huấn luyện theo hướng dẫn trong tài liệu hoặc liên hệ tác giả.
 
-  * Nhận tensor có dạng `(20, 64, 64, 1)` hoặc tương đương chuỗi frame video đã resize.
+4. **Chạy ứng dụng web:**
+   ```sh
+   python app.py
+   ```
+   Truy cập [http://localhost:5000](http://localhost:5000)
 
----
+## Hướng dẫn sử dụng
 
-### 📸 3. Phát hiện người
+- Tải lên video hoặc sử dụng webcam để nhận dạng hành động.
+- Xem kết quả dự đoán và video đã xử lý.
+- Có thể chọn mô hình dự đoán (SVM, RF, CNN+LSTM).
 
-* Dùng OpenCV Haar Cascade hoặc YOLOv5/YOLOv8 (nếu muốn chính xác hơn).
-* Trả về bounding box + cắt frame người để dự đoán hành động.
+## Các phương pháp đã triển khai
 
----
+1. **Trích xuất đặc trưng thủ công + mô hình truyền thống**
+   - Optical Flow, HOG, HOF
+   - SVM tự viết, SVC (scikit-learn), Random Forest
 
-### 🌐 4. Flask App – `app.py`
+2. **Học sâu (Deep Learning)**
+   - CNN (trích xuất đặc trưng không gian) + LSTM (mô hình hóa chuỗi thời gian)
+   - Keras/TensorFlow
 
-#### Các endpoint:
+3. **Phát hiện người (YOLOv8)**
+   - Tập trung vào vùng chứa người để giảm nhiễu nền
 
-* `/`: Trang chính.
-* `/upload`: Xử lý video tải lên, lưu vào `uploads/`.
-* `/predict`: Dự đoán hành động trên video hoặc webcam.
-* `/video_feed`: Stream webcam video thời gian thực.
-* `/download/<filename>`: Tải video đầu ra đã xử lý.
+## Đánh giá & trực quan hóa
 
----
+- Tính Accuracy, F1-score, Confusion Matrix cho từng mô hình
+- So sánh hiệu năng các phương pháp
+- Biểu đồ trực quan hóa kết quả
 
-### 🎨 5. Giao diện `index.html`
+## Demo Video Output
 
-Dùng Bootstrap:
+<div align="center">
 
-* **Dropdown chọn mô hình** (SVM / RF / CNN-LSTM).
-* **Tabs**:
+<h4>Video demo nhận dạng hành động "Punch"</h4>
+<video width="480" controls>
+  <source src="outputs/output_punch1.mp4" type="video/mp4">
+  Trình duyệt của bạn không hỗ trợ video.
+</video>
 
-  * Tải video từ máy.
-  * Xử lý webcam thời gian thực.
-* **Hiển thị video đầu ra** (với box + nhãn).
-* Thông báo trạng thái và nút tải kết quả (nếu có).
+<h4>Video demo nhận dạng hành động "PushUps"</h4>
+<video width="480" controls>
+  <source src="outputs/output_pushups1.mp4" type="video/mp4">
+  Trình duyệt của bạn không hỗ trợ video.
+</video>
 
----
+</div>
 
-### ⚙️ 6. Luồng xử lý video
-
-#### Với video upload:
-
-1. Đọc video → Lấy từng frame.
-2. Phát hiện người trong frame.
-3. Dự đoán hành động trên từng người.
-4. Vẽ bounding box + nhãn + xác suất.
-5. Ghi lại video kết quả → trả link tải.
-
-#### Với webcam:
-
-1. Dùng OpenCV mở webcam.
-2. Phát hiện người + dự đoán hành động liên tục.
-3. Trả luồng video dưới dạng MJPEG tới HTML `<img>`.
-
----
-
-### 🧪 7. Tối ưu hóa
-
-* Resize và crop người đúng tỷ lệ đầu vào model.
-* Cache mô hình sau khi load.
-* Hạn chế số lượng frame xử lý mỗi giây nếu cần (webcam).
-
----
+Nếu không xem được video trực tiếp trên GitHub, bạn có thể tải về từ thư mục [outputs/](outputs/).
